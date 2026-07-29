@@ -26,7 +26,7 @@ This is a project for my bash scripting class at University of Advancing Technol
 4.  Run the script with a target:
 _./nestcan.sh <target_IP_or_hostname>_
     
-    Example: ./netscan.sh 192.168.1.1
+    Example: `./netscan.sh 192.168.1.1`
 
 # Current Status
 Initial setup and basic port scanning functionality implemented.
@@ -39,4 +39,4 @@ This script is intended for educational purposes and for use on networks where y
 
 # Author
 **Richie Cardiel** _(rich.cardiel@gmail.com)_
-[Visit GitHub](https://github.com/Toemeifter/Network-Scanner)
+[Visit GitHub](https://github.com/Tonemeifter/Network-Scanner)
