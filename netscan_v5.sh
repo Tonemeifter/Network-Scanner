@@ -44,7 +44,7 @@ else
 fi
 
 # Output formatting
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
 REPORT_FILE="${FULL_REPORT_DIR}/scan_${TARGET}_${TIMESTAMP}.txt"
 
 # Check if nmap is installed
@@ -86,10 +86,6 @@ write_footer() {
 }
 
 main() {
-    if [ $# -ne "1" ]; then
-    echo "Usage: $0 <target_ip_or_hostname>" >&2
-    exit 1
-    fi
 
     write_header "$TARGET"> $REPORT_FILE
     echo >> $REPORT_FILE
