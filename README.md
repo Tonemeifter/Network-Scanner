@@ -2,7 +2,7 @@
 **Network-Scanner** _(netscan.sh)_
 
 # Description
-A Bash script that uses Nmap to scan a target host or network for open ports and known vulnerabilities, generating a formatted summary report.
+A Bash script that uses Nmap to scan a target host or IP address for open ports and known vulnerabilities, and queries NVD API for CVE inspection, generating a formatted summary report.
 
 # Purpose/Learning
 This is a project for my bash scripting class at University of Advancing Technology focusing on network and device security, shell scripting, and best programming practices.
@@ -29,13 +29,10 @@ _./nestcan.sh <target_IP_or_hostname>_
     
     Example: `./netscan.sh 192.168.1.1`
 
-**NOTE:** Running without arguments will run `127.0.0.1` by **DEFAULT**
+**NOTE:** Running without arguments will target `127.0.0.1` by **DEFAULT**
 
 # Current Status
-Initial setup and basic port scanning functionality implemented.
-
-# Future Goals
-Will be expanded to include vulnerability identification and detailed reporting.
+Functional network scanner.
 
 # Ethical Considerations
 This script is intended for educational purposes and for use on networks where you have explicit authorization. Unauthorized scanning of networks is illegal and unethical. The author is not responsible for any misuse of this tool.
