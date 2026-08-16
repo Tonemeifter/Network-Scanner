@@ -11,22 +11,25 @@ This is a project for my bash scripting class at University of Advancing Technol
 * Scans a user-specified target (IP or hostname).
 * Detects open ports and running services.
 * Identifies potential vulnerabilities using Nmap Scripting Engine (NSE).
+* Identifies CVEs with severity, CVSS, and summary via NVD API
 * Generates a well-formatted text or HTML report.
 * Includes robust error handling and input validation.
 
 # Prerequisites
 * Bash (version 4.0 or higher)
 * nmap (version 7.80 or higher)
-* xmlstarlet (version 1.6.1 or higher)
+* jq (version 1.6 or higher)
 
 # Usage
-1.  Clone the repository: `git clone git@github.com:YourUsername/my_scanner.git`
-2.  Navigate to the directory: `cd my_scanner`
+1.  Clone the repository: `git clone git@github.com:Tonemeifter/Network-Scanner.git`
+2.  Navigate to the directory: `cd Network-Scanner`
 3.  Make the script executable: `chmod +x network_scanner.sh`
 4.  Run the script with a target:
 _./nestcan.sh <target_IP_or_hostname>_
     
     Example: `./netscan.sh 192.168.1.1`
+
+`NOTE:` Running without arguments will run _127.0.0.1_ by `DEFAULT`
 
 # Current Status
 Initial setup and basic port scanning functionality implemented.
