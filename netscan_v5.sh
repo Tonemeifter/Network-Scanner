@@ -127,9 +127,9 @@ write_recs_section_alt() {
             # Fetch JSON payload from NVD
             RESPONSE=$(curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve")
             # Parse English description and CVSS V3.1 Base Score using jq
-            DESC=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.descriptions[] | select(.lang=="en").value || "No description available."' 2>/dev/null)
-            SCORE=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseScore || "N/A"' 2>/dev/null)
-            SEVERITY=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseSeverity || "UNKNOWN"' 2>/dev/null)
+            DESC=$(echo "$RESPONSE" | jq -r '([.vulnerabilities[0].cve.descriptions[]? | select(.lang=="en").value][0]) // "No description available."' 2>/dev/null)
+            SCORE=$(echo "$RESPONSE" | jq -r '(.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseScore) // "N/A"' 2>/dev/null)
+            SEVERITY=$(echo "$RESPONSE" | jq -r '(.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseSeverity) // "UNKNOWN"' 2>/dev/null)
 
             echo "  [$cve] Severity: $SEVERITY (CVSS: $SCORE)"
             echo "  Summary: $DESC"
@@ -144,6 +144,7 @@ write_footer() {
     echo "--- End of Report ---"
     
     echo "$(date)"
+    echo "Scan complete." >&2
 }
 
 main() {
