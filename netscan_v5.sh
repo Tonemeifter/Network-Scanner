@@ -69,21 +69,25 @@ run_network_scan() {
 
 write_header() {
     echo "--- Network Security Scan Report ---"
+    
     echo "Target IP Address: "$TARGET""
 }
 
 write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
+    
     echo "$SCAN_RESULTS" | grep "open"
 }
 
 write_vulns_section() {
     echo "--- Potential Vulnerabilities Identified ---"
+    
     echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "No vulnerable services flagged."
 }
 
 write_recs_section() {
     echo "--- Reccomendations for Remediation ---"
+    
     # Extract open ports and service names from Nmap
     echo "$SCAN_RESULTS" | grep "open" | while read -r line; do
         PORT=$(echo "$line" | awk '{print $1}')
@@ -106,6 +110,7 @@ write_recs_section() {
 
 write_recs_section_alt() {
     echo "--- Reccomendations for Remediation ---"
+   
     # Grabs first 3 unique CVE IDs identified by Nmap
     # true to prevent set -euo pipefail from crashing the script when grep finds no matches
     CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u | head -n 3 || true)
@@ -115,8 +120,19 @@ write_recs_section_alt() {
         echo "General Guidance: Enforce sctrict access controls and keep services up to date."
     else
         for cve in $CVES; do
-            echo "Querying NVD API for $cve..."
-            curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve"
+            echo "Querying NVD API for $cve..." >&2
+
+            # Fetch JSON payload from NVD
+            RESPONSE=$(curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve")
+            # Parse English description and CVSS V3.1 Base Score using jq
+            DESC=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.descriptions[] | select(.lang=="en").value // "No description available."' 2>/dev/null)
+            SCORE=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseScore // "N/A"' 2>/dev/null)
+            SEVERITY=$(echo "$RESPONSE" | jq -r '.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseSeverity // "UNKNOWN"' 2>/dev/null)
+
+            echo "  [$cve] Severity: $SEVERITY (CVSS: $SCORE)"
+            echo "  Summary: $DESC"
+            echo "--------------------------------------------------"
+            
             sleep 6 # Sleep to respect NVD's rate limit window
         done
     fi
@@ -124,6 +140,7 @@ write_recs_section_alt() {
 
 write_footer() {
     echo "--- End of Report ---"
+    
     echo "$(date)"
 }
 
