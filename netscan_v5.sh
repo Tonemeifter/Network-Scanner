@@ -76,12 +76,14 @@ write_header() {
 write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
     
+    echo "Scanning for open ports..." >&2
     echo "$SCAN_RESULTS" | grep "open"
 }
 
 write_vulns_section() {
     echo "--- Potential Vulnerabilities Identified ---"
     
+    echo "Scanning for potential vulnerabilities" >&2
     echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "No vulnerable services flagged."
 }
 
