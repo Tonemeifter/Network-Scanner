@@ -29,7 +29,7 @@ _./nestcan.sh <target_IP_or_hostname>_
     
     Example: `./netscan.sh 192.168.1.1`
 
-`NOTE:` Running without arguments will run _127.0.0.1_ by `DEFAULT`
+**NOTE:** Running without arguments will run `127.0.0.1` by **DEFAULT**
 
 # Current Status
 Initial setup and basic port scanning functionality implemented.
