@@ -50,12 +50,22 @@ REPORT_FILE="${FULL_REPORT_DIR}/scan_${TARGET}_${TIMESTAMP}.txt"
 # Check if nmap is installed
 if ! command -v nmap &> /dev/null; then
     echo "Error: nmap is not installed. Please install it to run this script." >&2
-    echo "Try: 'sudo apt install nmap' or 'sudo brew install nmap'"
-    exit 1
+    echo "Try: 'sudo apt install nmap' or 'brew install nmap'" >&2
+    exit 2
 fi
 
 
-# --- Functions ---
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed. Please install it to run this script." >&2
+    echo "Try: 'sudo apt install jq' or 'brew install jq'" >&2
+    exit 3
+fi
+
+run_network_scan() {
+    echo "Scanning target $TARGET..." >&2
+    SCAN_RESULTS=$(nmap $NMAP_FLAGS -sV --script vuln "$TARGET")
+}
 
 write_header() {
     echo "--- Network Security Scan Report ---"
@@ -64,20 +74,52 @@ write_header() {
 
 write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
-    nmap -sV "$TARGET" | grep "open"
+    echo "$SCAN_RESULTS" | grep "open"
 }
 
 write_vulns_section() {
     echo "--- Potential Vulnerabilities Identified ---"
-    SCAN_RESULTS=$(nmap -sV --script vuln "$TARGET")
-    echo "$SCAN_RESULTS" | grep "VULNERABLE"
+    echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "No vulnerable services flagged."
 }
 
 write_recs_section() {
     echo "--- Reccomendations for Remediation ---"
-    echo "Update all softeare to the latest versions."
-    echo "Change default credentials immediatley."
-    echo "Implement a firewall."
+    # Extract open ports and service names from Nmap
+    echo "$SCAN_RESULTS" | grep "open" | while read -r line; do
+        PORT=$(echo "$line" | awk '{print $1}')
+        SERVICE=$(echo "$line" | awk '{print $3}')
+        
+        case "$SERVICE" in
+            ssh)
+                echo "[+] SSH ($PORT): Enforce public key authentication and update sshd_config."
+                ;;
+            http|https)
+                echo "[+] Web Service ($PORT): Ensure TLS 1.3 is enforced and update web server headers."
+                ;;
+            *)
+                # Optional: Trigger NVD API query here, or fall back to general guidance
+                echo "[+] $SERVICE ($PORT): Audit service configurations and apply latest patches."
+                ;;
+        esac
+    done
+}
+
+write_recs_section_alt() {
+    echo "--- Reccomendations for Remediation ---"
+    # Grabs first 3 unique CVE IDs identified by Nmap
+    # true to prevent set -euo pipefail from crashing the script when grep finds no matches
+    CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u | head -n 3 || true)
+
+    if [ -z "$CVES" ]; then
+        echo "No specific CVE vulnerabilities detected."
+        echo "General Guidance: Enforce sctrict access controls and keep services up to date."
+    else
+        for cve in $CVES; do
+            echo "Querying NVD API for $cve..."
+            curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve"
+            sleep 6 # Sleep to respect NVD's rate limit window
+        done
+    fi
 }
 
 write_footer() {
@@ -86,12 +128,13 @@ write_footer() {
 }
 
 main() {
+    run_network_scan
 
     write_header "$TARGET"> $REPORT_FILE
     echo >> $REPORT_FILE
     write_ports_section "$TARGET" >> $REPORT_FILE
     echo >> $REPORT_FILE
-    write_recs_section >> $REPORT_FILE
+    write_recs_section_alt >> $REPORT_FILE
     echo >> $REPORT_FILE
     write_footer >> $REPORT_FILE
 }
