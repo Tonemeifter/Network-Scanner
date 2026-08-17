@@ -172,13 +172,15 @@ write_footer() {
 main() {
     run_network_scan
 
-    write_header "$TARGET"> $REPORT_FILE
-    echo >> $REPORT_FILE
-    write_ports_section "$TARGET" >> $REPORT_FILE
-    echo >> $REPORT_FILE
-    write_recs_section_alt >> $REPORT_FILE
-    echo >> $REPORT_FILE
-    write_footer >> $REPORT_FILE
+    write_header "$TARGET"> "$REPORT_FILE"
+    echo >> "$REPORT_FILE"
+    write_ports_section "$TARGET" >> "$REPORT_FILE"
+    echo >> "$REPORT_FILE"
+    write_vulns_section "$TARGET" >> "$REPORT_FILE"
+    echo >> "$REPORT_FILE"
+    write_recs_section_alt >> "$REPORT_FILE"
+    echo >> "$REPORT_FILE"
+    write_footer >> "$REPORT_FILE"
 }
 
 # --- Main Script Logic ---
