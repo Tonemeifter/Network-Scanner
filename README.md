@@ -9,10 +9,10 @@ This is a project for my bash scripting class at University of Advancing Technol
 
 # Features
 * Scans a user-specified target (IP or hostname).
-* Detects open ports and running services.
+* Detects open ports and running service versions.
 * Identifies potential vulnerabilities using Nmap Scripting Engine (NSE).
 * Identifies CVEs with severity, CVSS, and summary via NVD API
-* Generates a well-formatted text or HTML report.
+* Generates a formatted text report.
 * Includes robust error handling and input validation.
 
 # Prerequisites
