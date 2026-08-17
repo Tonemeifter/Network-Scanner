@@ -76,15 +76,37 @@ write_header() {
 write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
     
-    echo "Scanning for open ports..." >&2
-    echo "$SCAN_RESULTS" | grep "open"
+    echo "Scanning for open ports..." >&1
+    echo "$SCAN_RESULTS" | grep "open" || echo "No open ports found."
 }
 
 write_vulns_section() {
     echo "--- Potential Vulnerabilities Identified ---"
     
-    echo "Scanning for potential vulnerabilities" >&2
+    echo "Scanning for potential vulnerabilities" >&1
     echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "No vulnerable services flagged."
+
+    echo "--- Analyzing Service Versions ---"
+
+    # Process the full scan results line by line
+    echo "$SCAN_RESULTS" | while read -r line; do
+    
+      # Check for specific vulnerable versions
+      case "$line" in
+        *"vsftpd 2.3.4"*)
+            echo "[!!] VULNERABILITY DETECTED: vsftpd 2.3.4 is running, which contains a known critical backdoor (CVE-2011-2523)."
+          ;;
+        *"Apache httpd 2.4.49"*)
+          echo "[!!] VULNERABILITY DETECTED: Apache 2.4.49 is running, which is vulnerable to path traversal (CVE-2021-41773)."
+          ;;
+        *"Samba 3.0.20"*)
+          echo "[!!] VULNERABILITY DETECTED: Samba 3.0.20 is running, which is vulnerable to remote command execution (CVE-2007-2447)."
+          ;;
+        *"ProFTPD 1.3.5"*)
+          echo "[!!] VULNERABILITY DETECTED: ProFTPD 1.3.5 is running, which allows unauthenticated file read/write via mod_copy (CVE-2015-3306)."
+          ;;
+      esac
+done
 }
 
 write_recs_section() {
@@ -122,7 +144,7 @@ write_recs_section_alt() {
         echo "General Guidance: Enforce sctrict access controls and keep services up to date."
     else
         for cve in $CVES; do
-            echo "Querying NVD API for $cve..." >&2
+            echo "Querying NVD API for $cve..." >&1
 
             # Fetch JSON payload from NVD
             RESPONSE=$(curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve")
@@ -144,7 +166,7 @@ write_footer() {
     echo "--- End of Report ---"
     
     echo "$(date)"
-    echo "Scan complete." >&2
+    echo "Scan complete." >&1
 }
 
 main() {
