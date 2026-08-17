@@ -39,6 +39,8 @@ mkdir -p "${FULL_REPORT_DIR}"
 # Ensure there is a single argument in command, otherwise use DEFAULT_TARGET form .conf
 if [ $# -eq "1" ]; then
     TARGET="$1"
+elif [ $# -gt "1" ]; then
+    exit 2
 else
     TARGET="${DEFAULT_TARGET}"
 fi
@@ -51,7 +53,7 @@ REPORT_FILE="${FULL_REPORT_DIR}/scan_${TARGET}_${TIMESTAMP}.txt"
 if ! command -v nmap &> /dev/null; then
     echo "Error: nmap is not installed. Please install it to run this script." >&2
     echo "Try: 'sudo apt install nmap' or 'brew install nmap'" >&2
-    exit 2
+    exit 3
 fi
 
 
@@ -59,7 +61,14 @@ fi
 if ! command -v jq &> /dev/null; then
     echo "Error: jq is not installed. Please install it to run this script." >&2
     echo "Try: 'sudo apt install jq' or 'brew install jq'" >&2
-    exit 3
+    exit 4
+fi
+
+# Check if curl is installed
+if ! command -v curl &> /dev/null; then
+    echo "Error: curl is not installed. Please install it to run this script." >&2
+    echo "Try: 'sudo apt install curl' or 'brew install curl'" >&2
+    exit 5
 fi
 
 run_network_scan() {
@@ -76,17 +85,22 @@ write_header() {
 write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
     
-    echo "Scanning for open ports..." >&1
+    echo "Scanning for open ports..." >&2
     echo "$SCAN_RESULTS" | grep "open" || echo "No open ports found."
 }
 
 write_vulns_section() {
     echo "--- Potential Vulnerabilities Identified ---"
     
-    echo "Scanning for potential vulnerabilities" >&1
-    echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "No vulnerable services flagged."
+    echo "Scanning for potential vulnerabilities..." >&2
+    echo "$SCAN_RESULTS" | grep -A 2 "VULNERABLE" || echo "[+] No known vulnerable services flagged."
 
-    echo "--- Analyzing Service Versions ---"
+    echo
+    echo "--- Vulnerable Service Versions ---"
+    
+    echo "Scanning service versions..." >&2
+
+    FOUND_VULN=false
 
     # Process the full scan results line by line
     echo "$SCAN_RESULTS" | while read -r line; do
@@ -94,19 +108,28 @@ write_vulns_section() {
       # Check for specific vulnerable versions
       case "$line" in
         *"vsftpd 2.3.4"*)
-            echo "[!!] VULNERABILITY DETECTED: vsftpd 2.3.4 is running, which contains a known critical backdoor (CVE-2011-2523)."
+          echo "[!!] VULNERABILITY DETECTED: vsftpd 2.3.4 is running, which contains a known critical backdoor (CVE-2011-2523)."
+          FOUND_VULN=true
           ;;
         *"Apache httpd 2.4.49"*)
           echo "[!!] VULNERABILITY DETECTED: Apache 2.4.49 is running, which is vulnerable to path traversal (CVE-2021-41773)."
+          FOUND_VULN=true
           ;;
         *"Samba 3.0.20"*)
           echo "[!!] VULNERABILITY DETECTED: Samba 3.0.20 is running, which is vulnerable to remote command execution (CVE-2007-2447)."
+          FOUND_VULN=true
           ;;
         *"ProFTPD 1.3.5"*)
           echo "[!!] VULNERABILITY DETECTED: ProFTPD 1.3.5 is running, which allows unauthenticated file read/write via mod_copy (CVE-2015-3306)."
+          FOUND_VULN=true
           ;;
       esac
-done
+    done
+
+    # If no case statement is triggered, print "nothing found" message
+    if [ "$FOUND_VULN" = false ]; then
+        echo "[+] No known version-specific vulnerabilities flagged."
+    fi
 }
 
 write_recs_section() {
@@ -132,22 +155,39 @@ write_recs_section() {
     done
 }
 
-write_recs_section_alt() {
-    echo "--- Reccomendations for Remediation ---"
+write_cve_section() {
+    echo "--- Detected CVE Vulnerabilities ---"
    
     # Grabs first 3 unique CVE IDs identified by Nmap
     # true to prevent set -euo pipefail from crashing the script when grep finds no matches
-    CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u | head -n 3 || true)
+    CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u || true)
 
     if [ -z "$CVES" ]; then
         echo "No specific CVE vulnerabilities detected."
         echo "General Guidance: Enforce sctrict access controls and keep services up to date."
     else
         for cve in $CVES; do
-            echo "Querying NVD API for $cve..." >&1
+            echo "Querying NVD API for $cve..." >&2
 
-            # Fetch JSON payload from NVD
-            RESPONSE=$(curl -s "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve")
+            # Fetch JSON payload from NVD with a 5s connnectiion timeout
+            RESPONSE=$(curl -s --connect-timeout 5 "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve" || true)
+
+            # Check 1: Empty response (network failure or connection timeout)
+            if [ -z "$RESPONSE" ]; then
+                echo "  [$cve] Error: Unable to reach NVD API (Network failure or timeout)."
+                echo "--------------------------------------------------"
+                sleep 6
+                continue
+            fi
+
+            # Check 2: Invalid JSON payload (API rate limiting, HTML error page, or 503 response)
+            if ! echo "$RESPONSE" | jq -e . >/dev/null 2>&1; then
+                echo "  [$cve] Error: Invalid response from NVD API (Rate limit exceeded or service unavailable)."
+                echo "--------------------------------------------------"
+                sleep 6
+                continue
+            fi  
+
             # Parse English description and CVSS V3.1 Base Score using jq
             DESC=$(echo "$RESPONSE" | jq -r '([.vulnerabilities[0].cve.descriptions[]? | select(.lang=="en").value][0]) // "No description available."' 2>/dev/null)
             SCORE=$(echo "$RESPONSE" | jq -r '(.vulnerabilities[0].cve.metrics.cvssMetricV31[0].cvssData.baseScore) // "N/A"' 2>/dev/null)
@@ -166,19 +206,21 @@ write_footer() {
     echo "--- End of Report ---"
     
     echo "$(date)"
-    echo "Scan complete." >&1
+    echo "Scan complete." >&2
 }
 
 main() {
     run_network_scan
 
-    write_header "$TARGET"> "$REPORT_FILE"
+    write_header > "$REPORT_FILE"
     echo >> "$REPORT_FILE"
-    write_ports_section "$TARGET" >> "$REPORT_FILE"
+    write_ports_section  >> "$REPORT_FILE"
     echo >> "$REPORT_FILE"
-    write_vulns_section "$TARGET" >> "$REPORT_FILE"
+    write_vulns_section  >> "$REPORT_FILE"
     echo >> "$REPORT_FILE"
-    write_recs_section_alt >> "$REPORT_FILE"
+    write_recs_section >> "$REPORT_FILE"
+    echo >> "$REPORT_FILE"
+    write_cve_section >> "$REPORT_FILE"
     echo >> "$REPORT_FILE"
     write_footer >> "$REPORT_FILE"
 }
