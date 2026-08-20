@@ -19,7 +19,9 @@
 # Exit immediately on errors, unset variabales, and set pipefail
 set -euo pipefail
 
+
 # --- Signal Handling / Trap ---
+
 cleanup_on_cancel() {
     echo -e "\n[!] Scan cancelled by user. Exiting cleanly..." >&2
     
@@ -33,7 +35,9 @@ cleanup_on_cancel() {
 # Trap Ctrl+C (SIGINT) and termination requests (SIGTERM)
 trap cleanup_on_cancel SIGINT SIGTERM
 
+
 # --- Configuration Loading ---
+
 # Find the directory where the script itself is located.
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 CONFIG_FILE="${SCRIPT_DIR}/scanner.conf"
@@ -46,21 +50,30 @@ else
     exit 1
 fi
 
-FULL_REPORT_DIR="${SCRIPT_DIR}/${REPORT_DIR}"
-mkdir -p "${FULL_REPORT_DIR}"
+
+# --- Input Validation ---
 
 # Ensure there is a single argument in command, otherwise use DEFAULT_TARGET form .conf
 if [ $# -eq "1" ]; then
     TARGET="$1"
 elif [ $# -gt "1" ]; then
+    echo "Error: More than one target was detected. This script will scan a single IP Address or Hostname." >&2
+    echo "Usage: $0 <target_IP_or_hostname>" >&2
     exit 2
 else
     TARGET="${DEFAULT_TARGET}"
 fi
 
-# Output formatting
+
+# --- Output Formatting ---
+
+FULL_REPORT_DIR="${SCRIPT_DIR}/${REPORT_DIR}"
+mkdir -p "${FULL_REPORT_DIR}"
 TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
-REPORT_FILE="${FULL_REPORT_DIR}/scan_${TARGET}_${TIMESTAMP}.txt"
+REPORT_FILE="${FULL_REPORT_DIR}/scan_${TARGET//\//_}_${TIMESTAMP}.txt" # "/\//_" ensures report file follows POSIX path naming conventions
+
+
+# --- Dependency Checks ---
 
 # Check if nmap is installed
 if ! command -v nmap &> /dev/null; then
@@ -86,7 +99,7 @@ fi
 
 run_network_scan() {
     echo "Scanning target $TARGET..." >&2
-    SCAN_RESULTS=$(nmap $NMAP_FLAGS -sV --script vuln "$TARGET" 2>&1)
+    SCAN_RESULTS=$(nmap ${NMAP_FLAGS:-} -sV --script vuln -- "$TARGET" 2>&1)
 
     # Check if Nmap reported a failure in its output
     if echo "$SCAN_RESULTS" | grep -qE "Failed to resolve|WARNING: No targets were specified|Failed to determine IP address|Could not resolve"; then
@@ -153,7 +166,7 @@ write_vulns_section() {
 }
 
 write_recs_section() {
-    echo "--- Reccomendations for Remediation ---"
+    echo "--- Recommendations for Remediation ---"
     
     # Extract open ports and service names from Nmap
     echo "$SCAN_RESULTS" | grep "open" | while read -r line; do
@@ -184,7 +197,7 @@ write_cve_section() {
 
     if [ -z "$CVES" ]; then
         echo "No specific CVE vulnerabilities detected."
-        echo "General Guidance: Enforce sctrict access controls and keep services up to date."
+        echo "General Guidance: Enforce strict access controls and keep services up to date."
     else
         for cve in $CVES; do
             echo "Querying NVD API for $cve..." >&2
