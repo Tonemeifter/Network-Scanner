@@ -73,7 +73,14 @@ fi
 
 run_network_scan() {
     echo "Scanning target $TARGET..." >&2
-    SCAN_RESULTS=$(nmap $NMAP_FLAGS -sV --script vuln "$TARGET")
+    SCAN_RESULTS=$(nmap $NMAP_FLAGS -sV --script vuln "$TARGET" 2>&1)
+
+    # Check if Nmap reported a failure in its output
+    if echo "$SCAN_RESULTS" | grep -qE "Failed to resolve|WARNING: No targets were specified|Failed to determine IP address|Could not resolve"; then
+        echo "Error: Target '$TARGET' could not be resolved or is an invalid IP address." >&2
+        echo "Usage: $0 <target_IP_or_hostname>" >&2
+        exit 2
+    fi
 }
 
 write_header() {
