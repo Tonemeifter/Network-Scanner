@@ -34,7 +34,7 @@ Developed as a coursework project at the **University of Advancing Technology (U
 ---
 
 ## Usage
-1.  Clone the repository: `git clone git@github.com:Tonemeifter/Network-Scanner.git`
+1.  Clone the repository: `git clone https://git@github.com:Tonemeifter/Network-Scanner.git`
 2.  Navigate to the directory: `cd Network-Scanner`
 3.  Make the script executable: `chmod +x network_scanner.sh`
 4.  Run the script with a target:
