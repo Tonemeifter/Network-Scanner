@@ -2,7 +2,7 @@
 
 
 # =================================================================
-# Assignment:   7.2
+# Assignment:   Final Project
 #
 #
 # Description:  This script is a network scanner.
@@ -12,13 +12,26 @@
 #               Example: ./report.sh 192.168.1.1
 #
 # Author:       Richard Cardiel (rcardiel91144@uat.edu)
-# Version:      5.0
-# Date:         08/14/2026
+# Version:      6.0
+# Date:         08/20/2026
 # =================================================================
 
 # Exit immediately on errors, unset variabales, and set pipefail
 set -euo pipefail
 
+# --- Signal Handling / Trap ---
+cleanup_on_cancel() {
+    echo -e "\n[!] Scan cancelled by user. Exiting cleanly..." >&2
+    
+    # Remove incomplete report file if it was created
+    if [ -n "${REPORT_FILE:-}" ] && [ -f "${REPORT_FILE:-}" ]; then
+        rm -f "$REPORT_FILE"
+    fi
+    exit 130
+}
+
+# Trap Ctrl+C (SIGINT) and termination requests (SIGTERM)
+trap cleanup_on_cancel SIGINT SIGTERM
 
 # --- Configuration Loading ---
 # Find the directory where the script itself is located.
@@ -79,7 +92,7 @@ run_network_scan() {
     if echo "$SCAN_RESULTS" | grep -qE "Failed to resolve|WARNING: No targets were specified|Failed to determine IP address|Could not resolve"; then
         echo "Error: Target '$TARGET' could not be resolved or is an invalid IP address." >&2
         echo "Usage: $0 <target_IP_or_hostname>" >&2
-        exit 2
+        exit 6
     fi
 }
 
