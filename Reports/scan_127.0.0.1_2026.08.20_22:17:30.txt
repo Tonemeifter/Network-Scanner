@@ -1,0 +1,21 @@
+--- Network Security Scan Report ---
+Target IP Address: 127.0.0.1
+
+--- Open Ports and Detected Services ---
+5000/tcp open  rtsp
+
+--- Potential Vulnerabilities Identified ---
+[+] No known vulnerable services flagged.
+
+--- Vulnerable Service Versions ---
+[+] No known version-specific vulnerabilities flagged.
+
+--- Recommendations for Remediation ---
+[+] rtsp (5000/tcp): Audit service configurations and apply latest patches.
+
+--- Detected CVE Vulnerabilities ---
+[+] No specific CVE vulnerabilities detected.
+General Guidance: Enforce strict access controls and keep services up to date.
+
+--- End of Report ---
+Thu Aug 20 22:17:57 EDT 2026
