@@ -38,7 +38,7 @@ Developed as a coursework project at the **University of Advancing Technology (U
 2.  Navigate to the directory: `cd Network-Scanner`
 3.  Make the script executable: `chmod +x network_scanner.sh`
 4.  Run the script with a target:
-_./nestcan.sh <target_IP_or_hostname>_
+_./netscan.sh <target_IP_or_hostname>_
     
     Example: `./netscan.sh 192.168.1.1`
 
@@ -52,7 +52,7 @@ _./nestcan.sh <target_IP_or_hostname>_
 | :--- | :--- |
 | **`0`** | **Success:** The scan completed, and the report artifact was generated successfully. |
 | **`1`** | **Configuration Error:** The specified configuration file (`scanner.conf`) was not found in the script directory. |
-| **`2`** | **Invalid Usage:** Too many command-line arguments were passed to the script. |
+| **`2`** | **Invalid Usage / Input Validation:** Multiple target arguments were provided or the target contained invalid characters (only standard hostnames and IP addresses allowed). |
 | **`3`** | **Missing Dependency (`nmap`):** The `nmap` binary is not installed or available in the system `$PATH`. |
 | **`4`** | **Missing Dependency (`jq`):** The `jq` binary is not installed or available in the system `$PATH`. |
 | **`5`** | **Missing Dependency (`curl`):** The `curl` binary is not installed or available in the system `$PATH`. |
