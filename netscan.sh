@@ -57,16 +57,22 @@ fi
 if [ $# -eq "1" ]; then
     TARGET="$1"
 elif [ $# -gt "1" ]; then
-    echo "Error: More than one target was detected. This script will scan a single IP Address or Hostname." >&2
+    echo "Error: More than one target was detected. This script will scan a single IP address or hostname." >&2
     echo "Usage: $0 <target_IP_or_hostname>" >&2
     exit 2
 else
     TARGET="${DEFAULT_TARGET}"
 fi
 
+# Sanitize target format (IP or hostname only)
+if ! [[ "$TARGET" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+    echo "Error: Invalid target '$TARGET'. Only hostnames and IP addresses are allowed." >&2
+    exit 2
+fi
 
 # --- Output Formatting ---
 
+umask 077 # Restricts report permissions to owner read/write (-rw-------)
 FULL_REPORT_DIR="${SCRIPT_DIR}/${REPORT_DIR}"
 mkdir -p "${FULL_REPORT_DIR}"
 TIMESTAMP=$(date +%Y.%m.%d_%H:%M:%S)
