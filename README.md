@@ -50,14 +50,14 @@ _./nestcan.sh <target_IP_or_hostname>_
 
 | Exit Code | Description |
 | :--- | :--- |
-| **`0`** | **Success:** The scan completed, and the report artifact was generated successfully[cite: 3]. |
-| **`1`** | **Configuration Error:** The specified configuration file (`scanner.conf`) was not found in the script directory[cite: 3]. |
-| **`2`** | **Invalid Usage:** Too many command-line arguments were passed to the script[cite: 3]. |
-| **`3`** | **Missing Dependency (`nmap`):** The `nmap` binary is not installed or available in the system `$PATH`[cite: 3]. |
-| **`4`** | **Missing Dependency (`jq`):** The `jq` binary is not installed or available in the system `$PATH`[cite: 3]. |
-| **`5`** | **Missing Dependency (`curl`):** The `curl` binary is not installed or available in the system `$PATH`[cite: 3]. |
-| **`6`** | **Target Resolution Failure:** `nmap` failed to resolve the specified hostname/IP address, or no valid target was provided[cite: 3]. |
-| **`130`** | **Script Interrupted:** The scan process was manually canceled by the user (caught via `SIGINT` / `SIGTERM` trap)[cite: 3]. |
+| **`0`** | **Success:** The scan completed, and the report artifact was generated successfully. |
+| **`1`** | **Configuration Error:** The specified configuration file (`scanner.conf`) was not found in the script directory. |
+| **`2`** | **Invalid Usage:** Too many command-line arguments were passed to the script. |
+| **`3`** | **Missing Dependency (`nmap`):** The `nmap` binary is not installed or available in the system `$PATH`. |
+| **`4`** | **Missing Dependency (`jq`):** The `jq` binary is not installed or available in the system `$PATH`. |
+| **`5`** | **Missing Dependency (`curl`):** The `curl` binary is not installed or available in the system `$PATH`. |
+| **`6`** | **Target Resolution Failure:** `nmap` failed to resolve the specified hostname/IP address, or no valid target was provided. |
+| **`130`** | **Script Interrupted:** The scan process was manually canceled by the user (caught via `SIGINT` / `SIGTERM` trap). |
 
 ---
 
