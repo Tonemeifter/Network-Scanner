@@ -8,8 +8,8 @@
 # Description:  This script is a network scanner.
 #               
 #
-# Usage:        ./report.sh <target_IP_address>
-#               Example: ./report.sh 192.168.1.1
+# Usage:        ./netscan.sh <target_IP_address>
+#               Example: ./netscan.sh 192.168.1.1
 #
 # Author:       Richard Cardiel (rcardiel91144@uat.edu)
 # Version:      6.0
@@ -125,7 +125,7 @@ write_ports_section() {
     echo "--- Open Ports and Detected Services ---"
     
     echo "Scanning for open ports..." >&2
-    echo "$SCAN_RESULTS" | grep "open" || echo "No open ports found."
+    echo "$SCAN_RESULTS" | grep "open" || echo "[+] No open ports found."
 }
 
 write_vulns_section() {
@@ -174,8 +174,16 @@ write_vulns_section() {
 write_recs_section() {
     echo "--- Recommendations for Remediation ---"
     
-    # Extract open ports and service names from Nmap
-    echo "$SCAN_RESULTS" | grep "open" | while read -r line; do
+    # Extract open ports and service names from Nmap 
+    local open_ports
+    open_ports=$(echo "$SCAN_RESULTS" | grep "open" ||true)
+
+    if [ -z "$open_ports" ]; then
+        echo "[+] No open ports detected to generate recommendations."
+        return
+    fi
+
+    while read -r line; do
         PORT=$(echo "$line" | awk '{print $1}')
         SERVICE=$(echo "$line" | awk '{print $3}')
         
@@ -187,17 +195,16 @@ write_recs_section() {
                 echo "[+] Web Service ($PORT): Ensure TLS 1.3 is enforced and update web server headers."
                 ;;
             *)
-                # Optional: Trigger NVD API query here, or fall back to general guidance
                 echo "[+] $SERVICE ($PORT): Audit service configurations and apply latest patches."
                 ;;
         esac
-    done
+    done <<< "$open_ports"
 }
 
 write_cve_section() {
     echo "--- Detected CVE Vulnerabilities ---"
    
-    # Grabs first 3 unique CVE IDs identified by Nmap
+    # Grabs unique CVE IDs identified by Nmap
     # true to prevent set -euo pipefail from crashing the script when grep finds no matches
     CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u || true)
 
@@ -208,8 +215,8 @@ write_cve_section() {
         for cve in $CVES; do
             echo "Querying NVD API for $cve..." >&2
 
-            # Fetch JSON payload from NVD with a 5s connnectiion timeout
-            RESPONSE=$(curl -s --connect-timeout 5 "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve" || true)
+            # Fetch JSON payload from NVD with a 5s connection timeout
+            RESPONSE=$(curl -s -A "Netscan/1.0" --connect-timeout 5 "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=$cve" || true)
 
             # Check 1: Empty response (network failure or connection timeout)
             if [ -z "$RESPONSE" ]; then
