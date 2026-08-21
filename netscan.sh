@@ -11,7 +11,7 @@
 # Usage:        ./netscan.sh <target_IP_address>
 #               Example: ./netscan.sh 192.168.1.1
 #
-# Author:       Richard Cardiel (rcardiel91144@uat.edu)
+# Author:       Richard Cardiel (rcardiel91144@uat.edu, rich.cardiel@gmail.com)
 # Version:      6.0
 # Date:         08/20/2026
 # =================================================================
