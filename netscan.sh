@@ -136,7 +136,7 @@ write_vulns_section() {
     FOUND_VULN=false
 
     # Process the full scan results line by line
-    echo "$SCAN_RESULTS" | while read -r line; do
+    while read -r line; do
     
       # Check for specific vulnerable versions
       case "$line" in
@@ -157,7 +157,7 @@ write_vulns_section() {
           FOUND_VULN=true
           ;;
       esac
-    done
+    done <<< "$SCAN_RESULTS"
 
     # If no case statement is triggered, print "nothing found" message
     if [ "$FOUND_VULN" = false ]; then
@@ -196,7 +196,7 @@ write_cve_section() {
     CVES=$(echo "$SCAN_RESULTS" | grep -oE "CVE-[0-9]{4}-[0-9]+" | sort -u || true)
 
     if [ -z "$CVES" ]; then
-        echo "No specific CVE vulnerabilities detected."
+        echo "[+] No specific CVE vulnerabilities detected."
         echo "General Guidance: Enforce strict access controls and keep services up to date."
     else
         for cve in $CVES; do
