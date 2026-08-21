@@ -34,11 +34,11 @@ Developed as a coursework project at the **University of Advancing Technology (U
 ---
 
 ## Usage
-1.  Clone the repository: `git clone https://git.com/Tonemeifter/Network-Scanner`
+1.  Clone the repository: `git clone https://github.com/Tonemeifter/Network-Scanner.git`
 2.  Navigate to the directory: `cd Network-Scanner`
-3.  Make the script executable: `chmod +x network_scanner.sh`
+3.  Make the script executable: `chmod +x netscan.sh`
 4.  Run the script with a target:
-_./netscan.sh <target_IP_or_hostname>_
+`./netscan.sh <target_IP_or_hostname>`
     
     Example: `./netscan.sh 192.168.1.1`
 
